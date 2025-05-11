@@ -1,0 +1,12 @@
+{
+    "block.minecraft.stone": "Stone",
+    "block.minecraft.grass_block": "Grass Block",
+    "block.minecraft.dirt": "Dirt",
+    "block.minecraft.cobblestone": "Cobblestone",
+    "block.minecraft.oak_log": "Oak Log",
+    "item.minecraft.diamond": "Diamond",
+    "item.minecraft.diamond_sword": "Diamond Sword",
+    "item.minecraft.iron_pickaxe": "Iron Pickaxe",
+    "item.minecraft.golden_apple": "Golden Apple",
+    "item.minecraft.water_bucket": "Water Bucket"
+}
