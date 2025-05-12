@@ -19,7 +19,10 @@ Add the following to your `pom.xml`:
 
 ```xml
 <repositories>
-    <!-- Add your repository here if you publish the library -->
+    <repository>
+        <id>lenlino-repo</id>
+        <url>https://repo.lenlino.com/repository/maven-public/</url>
+    </repository>
 </repositories>
 
 <dependencies>
