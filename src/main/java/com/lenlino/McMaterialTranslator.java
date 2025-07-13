@@ -1,6 +1,7 @@
 package com.lenlino;
 
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -14,14 +15,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A utility class for translating Minecraft material names to different languages.
+ * A utility class for translating Minecraft material and entity names to different languages.
  */
 public class McMaterialTranslator {
     private static final String BLOCK_PREFIX = "block.minecraft.";
     private static final String ITEM_PREFIX = "item.minecraft.";
+    private static final String ENTITY_PREFIX = "entity.minecraft.";
     private static final String DEFAULT_LANGUAGE = "ja_jp";
 
     private final Map<Material, String> translationMap = new HashMap<>();
+    private final Map<EntityType, String> entityTranslationMap = new HashMap<>();
     private static final Map<String, McMaterialTranslator> instances = new ConcurrentHashMap<>();
     private final String languageCode;
 
@@ -113,6 +116,28 @@ public class McMaterialTranslator {
                     translationMap.put(material, (String) jsonObject.get(altItemKey));
                 }
             }
+
+            // Process all entity types
+            for (EntityType entityType : EntityType.values()) {
+                String entityName = entityType.name().toLowerCase();
+
+                // Try to find as entity
+                String entityKey = ENTITY_PREFIX + entityName;
+                if (jsonObject.containsKey(entityKey)) {
+                    entityTranslationMap.put(entityType, (String) jsonObject.get(entityKey));
+                    continue;
+                }
+
+                // Try with alternative naming conventions
+                // Some entities might have different naming patterns
+                String altEntityName = convertEntityNameToJsonKey(entityName);
+
+                // Try alternative entity key
+                String altEntityKey = ENTITY_PREFIX + altEntityName;
+                if (jsonObject.containsKey(altEntityKey)) {
+                    entityTranslationMap.put(entityType, (String) jsonObject.get(altEntityKey));
+                }
+            }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
@@ -147,6 +172,25 @@ public class McMaterialTranslator {
     }
 
     /**
+     * Converts an entity name to a format that might match the JSON keys.
+     * Handles special cases and naming differences between EntityType enum and JSON keys.
+     *
+     * @param entityName The entity name to convert
+     * @return A string that might match a JSON key
+     */
+    private String convertEntityNameToJsonKey(String entityName) {
+        // Handle special cases
+        switch (entityName) {
+            case "player": return "player";
+            case "armor_stand": return "armor_stand";
+            // Add more special cases as needed
+            default: break;
+        }
+
+        return entityName;
+    }
+
+    /**
      * Gets the translation for a material in the current language.
      *
      * @param material The material to translate
@@ -172,29 +216,62 @@ public class McMaterialTranslator {
     }
 
     /**
-     * Gets the translation for a material name in the current language.
+     * Gets the translation for an entity type in the current language.
      *
-     * @param materialName The name of the material to translate
-     * @return The translation in the current language, or the material name if no translation is found
+     * @param entityType The entity type to translate
+     * @return The translation in the current language, or the entity type name if no translation is found
      */
-    public String translate(String materialName) {
+    public String translate(EntityType entityType) {
+        if (entityType == null) {
+            return "null";
+        }
+
+        return entityTranslationMap.getOrDefault(entityType, entityType.name());
+    }
+
+    /**
+     * Gets the translation for an entity type in the specified language.
+     *
+     * @param entityType The entity type to translate
+     * @param languageCode The language code to translate to
+     * @return The translation in the specified language, or the entity type name if no translation is found
+     */
+    public static String translate(EntityType entityType, String languageCode) {
+        return getInstance(languageCode).translate(entityType);
+    }
+
+    /**
+     * Gets the translation for a material or entity name in the current language.
+     *
+     * @param name The name of the material or entity to translate
+     * @return The translation in the current language, or the original name if no translation is found
+     */
+    public String translate(String name) {
         try {
-            Material material = Material.valueOf(materialName.toUpperCase());
+            // Try as Material first
+            Material material = Material.valueOf(name.toUpperCase());
             return translate(material);
         } catch (IllegalArgumentException e) {
-            return materialName;
+            try {
+                // Try as EntityType if Material fails
+                EntityType entityType = EntityType.valueOf(name.toUpperCase());
+                return translate(entityType);
+            } catch (IllegalArgumentException e2) {
+                // Return original name if both fail
+                return name;
+            }
         }
     }
 
     /**
-     * Gets the translation for a material name in the specified language.
+     * Gets the translation for a material or entity name in the specified language.
      *
-     * @param materialName The name of the material to translate
+     * @param name The name of the material or entity to translate
      * @param languageCode The language code to translate to
-     * @return The translation in the specified language, or the material name if no translation is found
+     * @return The translation in the specified language, or the original name if no translation is found
      */
-    public static String translate(String materialName, String languageCode) {
-        return getInstance(languageCode).translate(materialName);
+    public static String translate(String name, String languageCode) {
+        return getInstance(languageCode).translate(name);
     }
 
     /**
@@ -219,7 +296,28 @@ public class McMaterialTranslator {
     }
 
     /**
-     * Gets all available translations in the current language.
+     * Checks if a translation exists for the given entity type in the current language.
+     *
+     * @param entityType The entity type to check
+     * @return true if a translation exists, false otherwise
+     */
+    public boolean hasTranslation(EntityType entityType) {
+        return entityTranslationMap.containsKey(entityType);
+    }
+
+    /**
+     * Checks if a translation exists for the given entity type in the specified language.
+     *
+     * @param entityType The entity type to check
+     * @param languageCode The language code to check
+     * @return true if a translation exists, false otherwise
+     */
+    public static boolean hasTranslation(EntityType entityType, String languageCode) {
+        return getInstance(languageCode).hasTranslation(entityType);
+    }
+
+    /**
+     * Gets all available material translations in the current language.
      *
      * @return A map of materials to their translations in the current language
      */
@@ -228,12 +326,31 @@ public class McMaterialTranslator {
     }
 
     /**
-     * Gets all available translations in the specified language.
+     * Gets all available material translations in the specified language.
      *
      * @param languageCode The language code to get translations for
      * @return A map of materials to their translations in the specified language
      */
     public static Map<Material, String> getAllTranslations(String languageCode) {
         return getInstance(languageCode).getAllTranslations();
+    }
+
+    /**
+     * Gets all available entity translations in the current language.
+     *
+     * @return A map of entity types to their translations in the current language
+     */
+    public Map<EntityType, String> getAllEntityTranslations() {
+        return new HashMap<>(entityTranslationMap);
+    }
+
+    /**
+     * Gets all available entity translations in the specified language.
+     *
+     * @param languageCode The language code to get translations for
+     * @return A map of entity types to their translations in the specified language
+     */
+    public static Map<EntityType, String> getAllEntityTranslations(String languageCode) {
+        return getInstance(languageCode).getAllEntityTranslations();
     }
 }

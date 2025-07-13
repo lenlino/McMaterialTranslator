@@ -1,6 +1,7 @@
 package com.lenlino;
 
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 
 import java.util.Map;
 
@@ -85,6 +86,35 @@ public class Main {
         printMaterialTranslation(japaneseTranslator, Material.COBBLESTONE);
         printMaterialTranslation(japaneseTranslator, Material.GRASS_BLOCK);
         printMaterialTranslation(japaneseTranslator, Material.WATER_BUCKET);
+
+        // Example 9: Entity Type Translations
+        System.out.println("\n--- Part 4: Entity Type Translations ---");
+
+        // Translate entity types
+        EntityType ghastType = EntityType.GHAST;
+        String ghastTranslation = japaneseTranslator.translate(ghastType);
+        System.out.println("Example 9: " + ghastType.name() + " in Japanese is " + ghastTranslation);
+
+        // Translate using a string entity name
+        String zombieTranslation = japaneseTranslator.translate("ZOMBIE");
+        System.out.println("Example 10: ZOMBIE in Japanese is " + zombieTranslation);
+
+        // Check if a translation exists
+        EntityType creeperType = EntityType.CREEPER;
+        boolean hasEntityTranslation = japaneseTranslator.hasTranslation(creeperType);
+        System.out.println("Example 11: Does " + creeperType.name() + " have a Japanese translation? " + hasEntityTranslation);
+        if (hasEntityTranslation) {
+            System.out.println("         Translation: " + japaneseTranslator.translate(creeperType));
+        }
+
+        // Print a few common entities and their translations
+        System.out.println("\nCommon Entities and their Japanese Translations:");
+        System.out.println("----------------------------------------------");
+        printEntityTranslation(japaneseTranslator, EntityType.ZOMBIE);
+        printEntityTranslation(japaneseTranslator, EntityType.SKELETON);
+        printEntityTranslation(japaneseTranslator, EntityType.CREEPER);
+        printEntityTranslation(japaneseTranslator, EntityType.ENDERMAN);
+        printEntityTranslation(japaneseTranslator, EntityType.VILLAGER);
     }
 
     /**
@@ -92,5 +122,12 @@ public class Main {
      */
     private static void printMaterialTranslation(McMaterialTranslator translator, Material material) {
         System.out.println(material.name() + " -> " + translator.translate(material));
+    }
+
+    /**
+     * Helper method to print an entity type and its translation.
+     */
+    private static void printEntityTranslation(McMaterialTranslator translator, EntityType entityType) {
+        System.out.println(entityType.name() + " -> " + translator.translate(entityType));
     }
 }
