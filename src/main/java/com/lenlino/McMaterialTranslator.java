@@ -1,7 +1,9 @@
 package com.lenlino;
 
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
+import org.bukkit.potion.PotionEffectType;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -15,16 +17,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A utility class for translating Minecraft material and entity names to different languages.
+ * A utility class for translating Minecraft material, entity, effect, and enchantment names to different languages.
  */
 public class McMaterialTranslator {
     private static final String BLOCK_PREFIX = "block.minecraft.";
     private static final String ITEM_PREFIX = "item.minecraft.";
     private static final String ENTITY_PREFIX = "entity.minecraft.";
+    private static final String EFFECT_PREFIX = "effect.minecraft.";
+    private static final String ENCHANTMENT_PREFIX = "enchantment.minecraft.";
     private static final String DEFAULT_LANGUAGE = "ja_jp";
 
     private final Map<Material, String> translationMap = new HashMap<>();
     private final Map<EntityType, String> entityTranslationMap = new HashMap<>();
+    private final Map<PotionEffectType, String> effectTranslationMap = new HashMap<>();
+    private final Map<Enchantment, String> enchantmentTranslationMap = new HashMap<>();
     private static final Map<String, McMaterialTranslator> instances = new ConcurrentHashMap<>();
     private final String languageCode;
 
@@ -138,6 +144,50 @@ public class McMaterialTranslator {
                     entityTranslationMap.put(entityType, (String) jsonObject.get(altEntityKey));
                 }
             }
+
+            // Process all potion effects
+            for (PotionEffectType effectType : PotionEffectType.values()) {
+                if (effectType == null) continue; // Skip null entries in the array
+
+                String effectName = effectType.getName().toLowerCase();
+
+                // Try to find as effect
+                String effectKey = EFFECT_PREFIX + effectName;
+                if (jsonObject.containsKey(effectKey)) {
+                    effectTranslationMap.put(effectType, (String) jsonObject.get(effectKey));
+                    continue;
+                }
+
+                // Try with alternative naming conventions
+                String altEffectName = convertEffectNameToJsonKey(effectName);
+
+                // Try alternative effect key
+                String altEffectKey = EFFECT_PREFIX + altEffectName;
+                if (jsonObject.containsKey(altEffectKey)) {
+                    effectTranslationMap.put(effectType, (String) jsonObject.get(altEffectKey));
+                }
+            }
+
+            // Process all enchantments
+            for (Enchantment enchantment : Enchantment.values()) {
+                String enchantmentName = enchantment.getKey().getKey().toLowerCase();
+
+                // Try to find as enchantment
+                String enchantmentKey = ENCHANTMENT_PREFIX + enchantmentName;
+                if (jsonObject.containsKey(enchantmentKey)) {
+                    enchantmentTranslationMap.put(enchantment, (String) jsonObject.get(enchantmentKey));
+                    continue;
+                }
+
+                // Try with alternative naming conventions
+                String altEnchantmentName = convertEnchantmentNameToJsonKey(enchantmentName);
+
+                // Try alternative enchantment key
+                String altEnchantmentKey = ENCHANTMENT_PREFIX + altEnchantmentName;
+                if (jsonObject.containsKey(altEnchantmentKey)) {
+                    enchantmentTranslationMap.put(enchantment, (String) jsonObject.get(altEnchantmentKey));
+                }
+            }
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
@@ -188,6 +238,70 @@ public class McMaterialTranslator {
         }
 
         return entityName;
+    }
+
+    /**
+     * Converts an effect name to a format that might match the JSON keys.
+     * Handles special cases and naming differences between PotionEffectType and JSON keys.
+     *
+     * @param effectName The effect name to convert
+     * @return A string that might match a JSON key
+     */
+    private String convertEffectNameToJsonKey(String effectName) {
+        // Handle special cases
+        switch (effectName) {
+            case "increase_damage": return "strength";
+            case "heal": return "instant_health";
+            case "harm": return "instant_damage";
+            case "jump": return "jump_boost";
+            case "confusion": return "nausea";
+            case "regeneration": return "regeneration";
+            case "damage_resistance": return "resistance";
+            case "fire_resistance": return "fire_resistance";
+            case "water_breathing": return "water_breathing";
+            case "invisibility": return "invisibility";
+            case "blindness": return "blindness";
+            case "night_vision": return "night_vision";
+            case "hunger": return "hunger";
+            case "weakness": return "weakness";
+            case "poison": return "poison";
+            case "wither": return "wither";
+            case "health_boost": return "health_boost";
+            case "absorption": return "absorption";
+            case "saturation": return "saturation";
+            case "glowing": return "glowing";
+            case "levitation": return "levitation";
+            case "luck": return "luck";
+            case "unluck": return "unluck";
+            case "slow_falling": return "slow_falling";
+            case "conduit_power": return "conduit_power";
+            case "dolphins_grace": return "dolphins_grace";
+            case "bad_omen": return "bad_omen";
+            case "hero_of_the_village": return "hero_of_the_village";
+            case "darkness": return "darkness";
+            // Add more special cases as needed
+            default: break;
+        }
+
+        return effectName;
+    }
+
+    /**
+     * Converts an enchantment name to a format that might match the JSON keys.
+     * Handles special cases and naming differences between Enchantment keys and JSON keys.
+     *
+     * @param enchantmentName The enchantment name to convert
+     * @return A string that might match a JSON key
+     */
+    private String convertEnchantmentNameToJsonKey(String enchantmentName) {
+        // Handle special cases
+        switch (enchantmentName) {
+            case "sweeping": return "sweeping_edge";
+            // Add more special cases as needed
+            default: break;
+        }
+
+        return enchantmentName;
     }
 
     /**
@@ -317,6 +431,98 @@ public class McMaterialTranslator {
     }
 
     /**
+     * Gets the translation for a potion effect type in the current language.
+     *
+     * @param effectType The potion effect type to translate
+     * @return The translation in the current language, or the effect type name if no translation is found
+     */
+    public String translate(PotionEffectType effectType) {
+        if (effectType == null) {
+            return "null";
+        }
+
+        return effectTranslationMap.getOrDefault(effectType, effectType.getName());
+    }
+
+    /**
+     * Gets the translation for a potion effect type in the specified language.
+     *
+     * @param effectType The potion effect type to translate
+     * @param languageCode The language code to translate to
+     * @return The translation in the specified language, or the effect type name if no translation is found
+     */
+    public static String translate(PotionEffectType effectType, String languageCode) {
+        return getInstance(languageCode).translate(effectType);
+    }
+
+    /**
+     * Gets the translation for an enchantment in the current language.
+     *
+     * @param enchantment The enchantment to translate
+     * @return The translation in the current language, or the enchantment name if no translation is found
+     */
+    public String translate(Enchantment enchantment) {
+        if (enchantment == null) {
+            return "null";
+        }
+
+        return enchantmentTranslationMap.getOrDefault(enchantment, enchantment.getKey().getKey());
+    }
+
+    /**
+     * Gets the translation for an enchantment in the specified language.
+     *
+     * @param enchantment The enchantment to translate
+     * @param languageCode The language code to translate to
+     * @return The translation in the specified language, or the enchantment name if no translation is found
+     */
+    public static String translate(Enchantment enchantment, String languageCode) {
+        return getInstance(languageCode).translate(enchantment);
+    }
+
+    /**
+     * Checks if a translation exists for the given potion effect type in the current language.
+     *
+     * @param effectType The potion effect type to check
+     * @return true if a translation exists, false otherwise
+     */
+    public boolean hasTranslation(PotionEffectType effectType) {
+        return effectTranslationMap.containsKey(effectType);
+    }
+
+    /**
+     * Checks if a translation exists for the given potion effect type in the specified language.
+     *
+     * @param effectType The potion effect type to check
+     * @param languageCode The language code to check
+     * @return true if a translation exists, false otherwise
+     */
+    public static boolean hasTranslation(PotionEffectType effectType, String languageCode) {
+        return getInstance(languageCode).hasTranslation(effectType);
+    }
+
+    /**
+     * Checks if a translation exists for the given enchantment in the current language.
+     *
+     * @param enchantment The enchantment to check
+     * @return true if a translation exists, false otherwise
+     */
+    public boolean hasTranslation(Enchantment enchantment) {
+        return enchantmentTranslationMap.containsKey(enchantment);
+    }
+
+    /**
+     * Checks if a translation exists for the given enchantment in the specified language.
+     *
+     * @param enchantment The enchantment to check
+     * @param languageCode The language code to check
+     * @return true if a translation exists, false otherwise
+     */
+    public static boolean hasTranslation(Enchantment enchantment, String languageCode) {
+        return getInstance(languageCode).hasTranslation(enchantment);
+    }
+
+    /**
      * Gets all available material translations in the current language.
      *
      * @return A map of materials to their translations in the current language
@@ -352,5 +558,43 @@ public class McMaterialTranslator {
      */
     public static Map<EntityType, String> getAllEntityTranslations(String languageCode) {
         return getInstance(languageCode).getAllEntityTranslations();
+    }
+
+    /**
+     * Gets all available effect translations in the current language.
+     *
+     * @return A map of potion effect types to their translations in the current language
+     */
+    public Map<PotionEffectType, String> getAllEffectTranslations() {
+        return new HashMap<>(effectTranslationMap);
+    }
+
+    /**
+     * Gets all available effect translations in the specified language.
+     *
+     * @param languageCode The language code to get translations for
+     * @return A map of potion effect types to their translations in the specified language
+     */
+    public static Map<PotionEffectType, String> getAllEffectTranslations(String languageCode) {
+        return getInstance(languageCode).getAllEffectTranslations();
+    }
+
+    /**
+     * Gets all available enchantment translations in the current language.
+     *
+     * @return A map of enchantments to their translations in the current language
+     */
+    public Map<Enchantment, String> getAllEnchantmentTranslations() {
+        return new HashMap<>(enchantmentTranslationMap);
+    }
+
+    /**
+     * Gets all available enchantment translations in the specified language.
+     *
+     * @param languageCode The language code to get translations for
+     * @return A map of enchantments to their translations in the specified language
+     */
+    public static Map<Enchantment, String> getAllEnchantmentTranslations(String languageCode) {
+        return getInstance(languageCode).getAllEnchantmentTranslations();
     }
 }

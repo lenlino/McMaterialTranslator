@@ -29,7 +29,7 @@ Add the following to your `pom.xml`:
     <dependency>
         <groupId>com.lenlino</groupId>
         <artifactId>McMaterialTranslator</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.1.0</version>
     </dependency>
 </dependencies>
 ```
@@ -149,7 +149,7 @@ Once the library is deployed to Nexus3, you can use it in your projects by addin
     <dependency>
         <groupId>com.lenlino</groupId>
         <artifactId>McMaterialTranslator</artifactId>
-        <version>1.0</version>
+        <version>1.1.0</version>
     </dependency>
 </dependencies>
 ```
